@@ -1,0 +1,65 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Shared Blackball - Publish to Azure
+
+on:
+ workflow_call:
+    inputs:
+     solution_file_name:
+      required: true
+      type: string
+    secrets:
+      azure_publish_profile:
+        required: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+          include-prerelease: true
+          
+      - name: Install dependencies
+        run: dotnet restore "${{ inputs.solution_file_name }}"
+        
+      #- name: Build Web
+      #  run: dotnet build HQ\Web\Web.csproj --configuration Release --no-restore
+
+      - name: Publish Web
+        run: dotnet publish HQ\Web\Web.csproj --no-restore -c Release -o ${{env.DOTNET_ROOT}}/Web
+
+      - name: Upload Web artifact for deployment job
+        uses: actions/upload-artifact@v2
+        with:
+          name: .net-app-web
+          path: ${{env.DOTNET_ROOT}}/Web
+
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: 'staging'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: .net-app-web
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'blackballhq'
+          slot-name: 'staging'
+          publish-profile: ${{ secrets.azure_publish_profile }}
+          package: .
