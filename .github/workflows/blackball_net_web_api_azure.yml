@@ -9,6 +9,9 @@ on:
      solution_file_name:
       required: true
       type: string
+     project_to_deploy:
+      required: true
+      type: string
     secrets:
       azure_publish_profile:
         required: true
@@ -29,17 +32,15 @@ jobs:
       - name: Install dependencies
         run: dotnet restore "${{ inputs.solution_file_name }}"
         
-      #- name: Build Web
-      #  run: dotnet build HQ\Web\Web.csproj --configuration Release --no-restore
 
       - name: Publish Web
-        run: dotnet publish HQ\Web\Web.csproj --no-restore -c Release -o ${{env.DOTNET_ROOT}}/Web
+        run: dotnet publish HQ\${{inputs.project_to_deploy}}\${{inputs.project_to_deploy}}.csproj --no-restore -c Release -o ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
 
       - name: Upload Web artifact for deployment job
         uses: actions/upload-artifact@v2
         with:
-          name: .net-app-web
-          path: ${{env.DOTNET_ROOT}}/Web
+          name: .net-app-${{inputs.project_to_deploy}}
+          path: ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
 
 
   deploy:
@@ -53,9 +54,9 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v2
         with:
-          name: .net-app-web
+          name: .net-app-${{inputs.project_to_deploy}}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
