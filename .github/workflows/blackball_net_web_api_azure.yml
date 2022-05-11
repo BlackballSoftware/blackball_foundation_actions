@@ -12,6 +12,9 @@ on:
      project_to_deploy:
       required: true
       type: string
+     azure-app-name:
+      required: true
+      type: string
     secrets:
       azure_publish_profile:
         required: true
@@ -60,7 +63,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'blackballhq'
-          slot-name: 'staging'
+          app-name: ${{inputs.azure_app_name}}
+          slot-name: staging
           publish-profile: ${{ secrets.azure_publish_profile }}
           package: .
