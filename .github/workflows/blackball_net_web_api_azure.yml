@@ -12,7 +12,7 @@ on:
      project_to_deploy:
       required: true
       type: string
-     azure-app-name:
+     azure_app_name:
       required: true
       type: string
     secrets:
