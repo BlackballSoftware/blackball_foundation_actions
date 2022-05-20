@@ -6,9 +6,6 @@ name: Shared Blackball - Publish to Azure
 on:
  workflow_call:
     inputs:
-     solution_file_name:
-      required: true
-      type: string
      project_to_deploy:
       required: true
       type: string
@@ -24,10 +21,6 @@ on:
         required: true
 
 jobs:
-  build:
-    uses: ./.github/workflows/blackball_net_build_solution.yml
-    with:
-      solution_file_name: ${{ inputs.solution_file_name }}
 
   publish:
     runs-on: windows-latest
