@@ -42,7 +42,7 @@ jobs:
         run: dotnet restore "${{ inputs.solution_file_name }}"
 
       - name: Build solution
-        run: dotnet build "${{ inputs.solution_file_name }}" -c Release
+        run: dotnet build "${{ inputs.solution_file_name }}" --no-restore -c Release
         
       - name: Publish
         working-directory: ${{inputs.working_directory}}
