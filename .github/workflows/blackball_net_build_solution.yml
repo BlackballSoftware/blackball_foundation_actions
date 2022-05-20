@@ -10,7 +10,6 @@ on:
       required: true
       type: string
 jobs:
-  # The 'build' name is important and referenced in blackball_net_publish_project
   build: 
     runs-on: windows-latest
 
