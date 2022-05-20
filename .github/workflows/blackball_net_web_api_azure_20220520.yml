@@ -25,11 +25,6 @@ on:
 
 jobs:
   build:
-    uses: .github/workflows/blackball_net_build_solution.yml@main
-    with:
-      solution_file_name: ${{ inputs.solution_file_name }}
-
-  publish:
     runs-on: windows-latest
 
     steps:
