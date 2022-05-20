@@ -32,16 +32,7 @@ jobs:
         with:
           dotnet-version: '6.0.x'
           include-prerelease: true
-        
-      - name: Initialize Blackball Nuget Farm
-        run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
-        
-      - name: Install dependencies
-        run: dotnet restore "${{ inputs.solution_file_name }}"
-
-      - name: Build solution
-        run: dotnet build "${{ inputs.solution_file_name }}" --no-restore -c Release
-        
+      
       - name: Publish
         working-directory: ${{inputs.working_directory}}
         run: dotnet publish ${{inputs.project_to_deploy}}\${{inputs.project_to_deploy}}.csproj --no-build --no-restore -c Release -o ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
