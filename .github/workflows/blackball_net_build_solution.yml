@@ -22,7 +22,7 @@ jobs:
           include-prerelease: true
         
       - name: Initialize Blackball Nuget Farm
-        run: dotnet nuget add source "https://nuget.blackballsoftware.com/api/v2"
+        run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
         
       - name: Dotnet restore
         run: dotnet restore "${{ inputs.solution_file_name }}"
