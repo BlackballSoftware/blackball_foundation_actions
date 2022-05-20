@@ -22,7 +22,8 @@ jobs:
           include-prerelease: true
         
       - name: Initialize Blackball Nuget Farm
-        run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
+        # We give this a unique name (blackball-github-actions) so as to be sure it doesn't conflict with anything embedded in any of our code repos (e.g. via a packageSource tag) because dotnet doesn't like it when you add dupes
+        run: dotnet nuget add source --name blackball-github-actions "https://nuget.blackballsoftware.com/api/v2"
         
       - name: Install dependencies
         run: dotnet restore "${{ inputs.solution_file_name }}"
