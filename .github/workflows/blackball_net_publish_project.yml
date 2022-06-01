@@ -16,10 +16,6 @@ on:
       required: false
       type: string
       default: ./
-     azure_deployment_slot_name:
-      required: false
-      type: string
-      default: staging
     secrets:
       azure_publish_profile:
         required: true
@@ -72,6 +68,6 @@ jobs:
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{inputs.azure_app_name}}
-          slot-name: ${{inputs.azure_deployment_slot_name}}
+          slot-name: staging
           publish-profile: ${{ secrets.azure_publish_profile }}
           package: .
