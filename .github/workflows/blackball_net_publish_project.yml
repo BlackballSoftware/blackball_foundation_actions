@@ -28,6 +28,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Bump version
+        shell: pwsh
+        run: |
+            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            "Bumping version $packageVersion"
+            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
+            Get-Date -Format "yyyy" | Set currentYear
+            
+            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
+                Set csprojFilePath $_
+                "Patching $csprojFilePath"
+                ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
+            }
+
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v2
         with:

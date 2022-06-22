@@ -44,9 +44,6 @@ jobs:
                 ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
             }
 
-            git commit -am "Bump version to $packageVersion"
-            git push
-            
 
       #- name: Set up .NET Core
       #  uses: actions/setup-dotnet@v2
