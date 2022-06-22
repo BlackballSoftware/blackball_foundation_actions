@@ -32,7 +32,9 @@ jobs:
       - name: Bump version
         shell: pwsh
         run: |
+            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
             Write-Host "Bump working"
+            "Setting package version $packageVersion"
         
       #- name: Set up .NET Core
       #  uses: actions/setup-dotnet@v2
