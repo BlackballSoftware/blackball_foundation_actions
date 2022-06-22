@@ -39,10 +39,13 @@ jobs:
             Get-Date -Format "yyyy" | Set currentYear
             
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
-                "Patching $_"
-                # ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
+                Set csprojFilePath $_
+                "Patching $csprojFilePath"
+                ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
             }
 
+            git commit -am "Bump version to $packageVersion"
+            git push
             
 
       #- name: Set up .NET Core
