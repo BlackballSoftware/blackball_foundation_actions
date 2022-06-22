@@ -14,7 +14,7 @@ Write-Host "Bump working"
 "Setting package version $packageVersion"
 return
 
-Set versionTag "<version>$packageVersion</version>"
+Set versionTag "<FileVersion>$packageVersion</FileVersion>"
 Get-Date -Format "yyyy" | Set currentYear
 Set copyrightTag "<copyright>Copyright Blackball Software Ltd $currentYear</copyright>"
 Set assemblyFileVersionInfoTag "AssemblyFileVersion(""$packageVersion"")"
