@@ -35,27 +35,27 @@ jobs:
         Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
         Write-Host "Bump working"
         "Setting package version $packageVersion"
-
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: '6.0.x'
-          include-prerelease: true
+        |
+      #- name: Set up .NET Core
+      #  uses: actions/setup-dotnet@v2
+      #  with:
+      #    dotnet-version: '6.0.x'
+      #    include-prerelease: true
          
-      - name: Initialize Blackball Nuget Farm
-        run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
+      #- name: Initialize Blackball Nuget Farm
+      #  run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
       
-      - name: Publish
-        working-directory: ${{inputs.working_directory}}
-        # 23 May 2022, Ben Liebert: If I add --no-build and --no-restore flags to this line, it fails to generate the assets.json file and cannot publish. Which is weird
-        # because by this point we have already built/restored (in other workflow) and I thought that adding these flags was entirely the point of pre-building?
-        run: dotnet publish ${{inputs.project_to_deploy}}\${{inputs.project_to_deploy}}.csproj -c Release -o ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}} -a x64
+      #- name: Publish
+      #  working-directory: ${{inputs.working_directory}}
+      #  # 23 May 2022, Ben Liebert: If I add --no-build and --no-restore flags to this line, it fails to generate the assets.json file and cannot publish. Which is weird
+      #  # because by this point we have already built/restored (in other workflow) and I thought that adding these flags was entirely the point of pre-building?
+      #  run: dotnet publish ${{inputs.project_to_deploy}}\${{inputs.project_to_deploy}}.csproj -c Release -o ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}} -a x64
        
-      - name: Upload Web artifact for deployment job
-        uses: actions/upload-artifact@v2
-        with:
-          name: .net-app-${{inputs.project_to_deploy}}
-          path: ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
+      #- name: Upload Web artifact for deployment job
+      #  uses: actions/upload-artifact@v2
+      #  with:
+      #    name: .net-app-${{inputs.project_to_deploy}}
+      #    path: ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
 
 
   #deploy:
