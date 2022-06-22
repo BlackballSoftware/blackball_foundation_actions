@@ -10,6 +10,7 @@
 # Build - hhmm - we can have a max of FIVE characters here, hence we can't append ss to this. This means if we run this file twice in the same minute we'll create the SAME version number
 Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
 
+Write-Host "Bump working"
 "Setting package version $packageVersion"
 return
 
