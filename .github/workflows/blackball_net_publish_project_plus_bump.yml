@@ -31,9 +31,8 @@ jobs:
 
       - name: Bump version
         shell: pwsh
-        run: |
-            write-host "hi"
-            .\bump_version.ps1
+        run: .\bump_version.ps1
+            
 
       #- name: Set up .NET Core
       #  uses: actions/setup-dotnet@v2
