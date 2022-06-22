@@ -32,7 +32,7 @@ jobs:
       - name: Bump version
         shell: pwsh
         run: |
-        Write-Host "Bump working"
+            Write-Host "Bump working"
         
       #- name: Set up .NET Core
       #  uses: actions/setup-dotnet@v2
