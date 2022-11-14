@@ -33,26 +33,21 @@ jobs:
         shell: pwsh
         run: |
             Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            
             "Bumping version $packageVersion"
             Set versionTag "<FileVersion>$packageVersion</FileVersion>"
-            
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
                 Set csprojFilePath $_
                 "Patching $csprojFilePath"
                 ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
             }
             
-      - name: Bump version (service worker)
-        shell: pwsh
-        run: |
-            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
             "Bumping service worker version $packageVersion"
-            Set versionTag "const VERSION = ""$packageVersion"";"
-                                 
+            Set swTag "const VERSION = ""$packageVersion"";"
             Get-ChildItem -Path .\ -Filter serviceworker.js -Recurse -File -Name| ForEach-Object {
              Set swFilePath $_
              "Patching $swFilePath"
-             ((Get-Content -path $swFilePath -Raw) -replace 'const VERSION = \"[^\"]+\";', $versionTag) | Set-Content -path $swFilePath
+             ((Get-Content -path $swFilePath -Raw) -replace 'const VERSION = \"[^\"]+\";', $swTag) | Set-Content -path $swFilePath
             }
 
       - name: Set up .NET Core
