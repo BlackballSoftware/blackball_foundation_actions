@@ -47,7 +47,10 @@ jobs:
             Get-ChildItem -Path .\ -Filter serviceworker.js -Recurse -File -Name| ForEach-Object {
              Set swFilePath $_
              "Patching $swFilePath"
-             ((Get-Content -path $swFilePath -Raw) -replace 'const VERSION = \"[^\"]+\";', $swTag) | Set-Content -path $swFilePath
+             ((Get-Content -path $swFilePath -Raw) -replace 'const VERSION = \"[^\"]+\";', $swTag) | Set formattedFile
+             Set formattedFile "/* Bump, Foundation CI, $packageVersion */ `n`n$formattedFile"
+             "Save $swFilePath :`n`n $formattedFile"
+             Set-Content $formattedFile -path $swFilePath
             }
 
       - name: Set up .NET Core
