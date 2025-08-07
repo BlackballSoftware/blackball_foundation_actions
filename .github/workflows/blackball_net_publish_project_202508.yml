@@ -79,7 +79,6 @@ jobs:
                         # Use the call operator '&' to execute the command with the parameter list
                         $gitDateString = & git @gitLogParams
                         
-                        "Git $($file.Name): $gitDateString"
                         # Check if a date was returned (files not in git history will return nothing)
                         if ($gitDateString) {
                             # Convert the string output from git log into a DateTime object
