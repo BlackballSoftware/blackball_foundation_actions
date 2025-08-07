@@ -72,8 +72,8 @@ jobs:
                         # Check if a date was returned (files not in git history will return nothing)
                         if ($gitDateString) {
                             # Convert the string output from git log into a DateTime object
-                            $commitDate = [datetime]::ParseExact($gitDateString, 'ddd MMM d HH:mm:ss yyyy zzz', [System.Globalization.CultureInfo]::InvariantCulture)
-                
+                            $commitDate = [datetime]::ParseExact($gitDateString, 'yyyy-MM-dd HH:mm:ss zzz', [System.Globalization.CultureInfo]::InvariantCulture)
+
                             if ($commitDate -gt $lastModified) {
                                 $lastModified = $commitDate
                                 $lastModifiedFile = $file
