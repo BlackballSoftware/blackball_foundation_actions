@@ -33,21 +33,52 @@ jobs:
             
             
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
-                Set assemblyInfoPath $_.FullName
-                Set folderName $_.Directory
-                
-                # When you rebuild a project, the staticwebassets.pack.sentinel file seems to be last modified. Let's restrict to just those files
-                # which are actual code (ie. which warrant a deploy)
-                # runtimeconfig.json is tagged when you build the app
-                Set filter {(($_.name -like "*.png") -or ($_.name -like "*.gif") -or ($_.name -like "*.jpg") -or ($_.name -like "*.targets") -or ($_.name -like "*.svg") -or ($_.name -like "*.json") -or ($_.name -like "*.cs") -or ($_.name -like "*.csproj") -or ($_.name -like "*.ts") -or ($_.name -like "*.js") -or ($_.name -like "*.less") -or ($_.name -like "*.cshtml") -or ($_.name -like "*.xml")) -and ($_.name -notlike "*.runtimeconfig.json") -and ($_.name -notlike "*.nuget.dgspec.json") -and ($_.FullName -notlike "*\bin\*") -and ($_.FullName -notlike "*\obj\*") -and ($_.FullName -notlike "*\.vscode\*")}
+                $assemblyInfoPath = $_.FullName
+                $folderName = $_.Directory
             
-                # Have to clear the variable, otherwise PS will remember the value from the prior loop!
-                Set lastModifiedFile $null
-                Get-ChildItem $folderName -Recurse | Where-Object $filter | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | Set lastModifiedFile
-                if ($lastModifiedFile -eq $null){
-                    "No modified files were found for $file"
+                # Define your filter more cleanly using an array and -in operator
+                $validExtensions = @(".png", ".gif", ".jpg", ".targets", ".svg", ".json", ".cs", ".csproj", ".ts", ".js", ".less", ".cshtml", ".xml")
+            
+                # Get all files in the folder and its subfolders that match your criteria
+                $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
+                    $_.Extension -in $validExtensions -and
+                    $_.Name -notlike "*.runtimeconfig.json" -and
+                    $_.Name -notlike "*.nuget.dgspec.json" -and
+                    $_.FullName -notlike "*\bin\*" -and
+                    $_.FullName -notlike "*\obj\*" -and
+                    $_.FullName -notlike "*\.vscode\*"
+                }
+            
+                $lastModifiedFile = $null
+                $lastModified = [datetime]::MinValue
+            
+                # Loop through each filtered file to find the one with the latest commit date
+                foreach ($file in $filesToInspect) {
+                    # Use git log to get the author date of the last commit for this file
+                    # The -1 option gets only the last commit
+                    # --pretty=format:%ad formats the output to just the author date
+                    # -- $file.FullName ensures that git correctly handles the file path
+                    $gitDateString = git log -1 --pretty=format:%ad -- "$($file.FullName)"
+            
+                    # Check if a date was returned (files not in git history will return nothing)
+                    if ($gitDateString) {
+                        # Convert the string output from git log into a DateTime object
+                        $commitDate = [datetime]::ParseExact($gitDateString, 'ddd MMM d HH:mm:ss yyyy zzz', [System.Globalization.CultureInfo]::InvariantCulture)
+            
+                        if ($commitDate -gt $lastModified) {
+                            $lastModified = $commitDate
+                            $lastModifiedFile = $file
+                        }
+                    }
+                }
+            
+                if ($lastModifiedFile -eq $null) {
+                    "No modified files were found for $($_.Name)"
                     continue
                 }
+            
+                "The last modified file for $($_.Name) was $($lastModifiedFile.Name), at $lastModified (from git commit date)"
+
             
             
                 Set lastModified ($lastModifiedFile).LastWriteTime
