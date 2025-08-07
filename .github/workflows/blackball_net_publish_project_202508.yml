@@ -30,20 +30,12 @@ jobs:
       - name: Bump version
         shell: pwsh
         run: |
-            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
             
-            "Bumping calculated version $packageVersion"
             Set versionTag "<FileVersion>$packageVersion</FileVersion>"
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
-                Set csprojFilePath $_.Name
+                Set assemblyInfoPath $_.Name
                 Set folderName $_.Directory
-                $_
-                return
-         
-
                 
-                Set assemblyInfoPath "../Foundation.$file/Blackball.Foundation.$file.csproj"
-            
                 # When you rebuild a project, the staticwebassets.pack.sentinel file seems to be last modified. Let's restrict to just those files
                 # which are actual code (ie. which warrant a deploy)
                 # runtimeconfig.json is tagged when you build the app
@@ -63,14 +55,15 @@ jobs:
                 Set lastPublishDate $lastModified
                 Set lastPublishDateDesc ""
                 "The last modified file was $lastModifiedFileName, at $lastModified"
-
-
-                
-                "Patching $csprojFilePath"
-                ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
+               
+                $packageVersion = $lastModified.ToString("3.yy.MMdd.HHmm")
+                Set versionTag "<FileVersion>$packageVersion</FileVersion>"
+                "Patching $assemblyInfoPath to $packageVersion"
+                ((Get-Content -path $assemblyInfoPath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $assemblyInfoPath
             }
             
             "Bumping service worker version $packageVersion"
+            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
             Set swTag "const VERSION = ""$packageVersion"";"
             Get-ChildItem -Path .\ -Filter serviceworker.* -Recurse -File -Name| ForEach-Object {
              Set swFilePath $_
