@@ -64,8 +64,10 @@ jobs:
                         # The -1 option gets only the last commit
                         # --pretty=format:%ad formats the output to just the author date
                         # -- $file.FullName ensures that git correctly handles the file path
-                        $gitDateString = git log -1 --pretty=format:%ad -- "$($file.FullName)"
-
+                        # Use the call operator '&' and parentheses to ensure the command and its arguments are processed correctly
+                        # The extra quotes around the file name are crucial for paths with spaces
+                        $gitDateString = & git log -1 --pretty=format:%ad -- "$($file.FullName)"
+                        
                         "Git $($file.Name): $gitDateString"
                         # Check if a date was returned (files not in git history will return nothing)
                         if ($gitDateString) {
