@@ -32,17 +32,79 @@ jobs:
       - name: Bump version
         shell: pwsh
         run: |
-            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
+                $assemblyInfoPath = $_.FullName
+                $folderName = $_.Directory
+
+                # If we have a UI project, I want to grab the lastest modified file date, because our front-end raises 'update' notifications
+                # based on this. I am hard-coding our convention-based names (App and Web) here, so this will need updating later if we do something else
+                if ($_.Name -eq "App.csproj" -or $_.Name -eq "Web.csproj") {
             
-            "Bumping version $packageVersion"
-            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
-            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
-                Set csprojFilePath $_
-                "Patching $csprojFilePath"
-                ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
+                    # Define your filter more cleanly using an array and -in operator
+                    $validExtensions = @(".cs", ".css", ".js", ".less", ".cshtml")
+                
+                    # Get all files in the folder and its subfolders that match your criteria
+                    $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
+                        $_.Extension -in $validExtensions -and
+                        $_.Name -notlike "*.runtimeconfig.json" -and
+                        $_.Name -notlike "*.nuget.dgspec.json" -and
+                        $_.Name -notlike "*appsettings.json" -and
+                        $_.FullName -notlike "*\bin\*" -and
+                        $_.FullName -notlike "*\obj\*" -and
+                        $_.FullName -notlike "*\.vscode\*"
+                    }
+                
+                    $lastModifiedFile = $null
+                    $lastModified = [datetime]::MinValue
+                
+                    # Loop through each filtered file to find the one with the latest commit date
+                    foreach ($file in $filesToInspect) {
+                        # Use git log to get the author date of the last commit for this file
+                        # The -1 option gets only the last commit
+                        # --pretty=format:%ad formats the output to just the author date
+                        # -- $file.FullName ensures that git correctly handles the file path
+                        # Use the call operator '&' and parentheses to ensure the command and its arguments are processed correctly
+                        # The extra quotes around the file name are crucial for paths with spaces
+                        # Create a parameter list for git log to ensure arguments are passed correctly
+                        $gitLogParams = @(
+                            'log',
+                            '-1',
+                            '--pretty=format:%ad',
+                            '--date=iso',
+                            '--',
+                            $file.FullName
+                        )
+                        
+                        # Use the call operator '&' to execute the command with the parameter list
+                        $gitDateString = & git @gitLogParams
+                        
+                        # Check if a date was returned (files not in git history will return nothing)
+                        if ($gitDateString) {
+                            # Convert the string output from git log into a DateTime object
+                            $commitDate = [datetime]::ParseExact($gitDateString, 'yyyy-MM-dd HH:mm:ss zzz', [System.Globalization.CultureInfo]::InvariantCulture)
+
+                            if ($commitDate -gt $lastModified) {
+                                $lastModified = $commitDate
+                                $lastModifiedFile = $file
+                            }
+                        }
+                    }
+                    # Set lastModified ($lastModifiedFile).LastWriteTime
+                    "The last modified file for $($_.Name) was $($lastModifiedFile.Name), at $lastModified (from git commit date)"
+                }else{
+                    # For all other projects, we can just use the current date - save us trawling through the git history
+                    Get-Date | Set lastModified
+                }
+
+                # Patch the csproj file version 
+                $packageVersion = $lastModified.ToString("3.yy.MMdd.HHmm")
+                Set versionTag "<FileVersion>$packageVersion</FileVersion>"
+                ((Get-Content -path $assemblyInfoPath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $assemblyInfoPath
             }
             
             "Bumping service worker version $packageVersion"
+            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
             Set swTag "const VERSION = ""$packageVersion"";"
             Get-ChildItem -Path .\ -Filter serviceworker.* -Recurse -File -Name| ForEach-Object {
              Set swFilePath $_
