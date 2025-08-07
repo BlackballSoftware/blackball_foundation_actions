@@ -65,7 +65,8 @@ jobs:
                         # --pretty=format:%ad formats the output to just the author date
                         # -- $file.FullName ensures that git correctly handles the file path
                         $gitDateString = git log -1 --pretty=format:%ad -- "$($file.FullName)"
-                
+
+                        "Git $($file.Name): $gitDateString"
                         # Check if a date was returned (files not in git history will return nothing)
                         if ($gitDateString) {
                             # Convert the string output from git log into a DateTime object
@@ -80,14 +81,13 @@ jobs:
                     # Set lastModified ($lastModifiedFile).LastWriteTime
                     "The last modified file for $($_.Name) was $($lastModifiedFile.Name), at $lastModified (from git commit date)"
                 }else{
+                    # For all other projects, we can just use the current date - save us trawling through the git history
                     Get-Date | Set lastModified
-                    "The modification timestamp for $($_.Name) is $lastModified (current date)"
                 }
 
                 # Patch the csproj file version 
                 $packageVersion = $lastModified.ToString("3.yy.MMdd.HHmm")
                 Set versionTag "<FileVersion>$packageVersion</FileVersion>"
-                "Patching $assemblyInfoPath to $packageVersion"
                 ((Get-Content -path $assemblyInfoPath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $assemblyInfoPath
             }
             
