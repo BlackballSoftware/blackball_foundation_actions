@@ -34,8 +34,38 @@ jobs:
             
             "Bumping calculated version $packageVersion"
             Set versionTag "<FileVersion>$packageVersion</FileVersion>"
-            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
-                Set csprojFilePath $_
+            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
+                Set csprojFilePath $_.Name
+                Set folderName $_.Directory
+                $_
+                return
+         
+
+                
+                Set assemblyInfoPath "../Foundation.$file/Blackball.Foundation.$file.csproj"
+            
+                # When you rebuild a project, the staticwebassets.pack.sentinel file seems to be last modified. Let's restrict to just those files
+                # which are actual code (ie. which warrant a deploy)
+                # runtimeconfig.json is tagged when you build the app
+                Set filter {(($_.name -like "*.png") -or ($_.name -like "*.gif") -or ($_.name -like "*.jpg") -or ($_.name -like "*.targets") -or ($_.name -like "*.svg") -or ($_.name -like "*.json") -or ($_.name -like "*.cs") -or ($_.name -like "*.csproj") -or ($_.name -like "*.ts") -or ($_.name -like "*.js") -or ($_.name -like "*.less") -or ($_.name -like "*.cshtml") -or ($_.name -like "*.xml")) -and ($_.name -notlike "*.runtimeconfig.json") -and ($_.name -notlike "*.nuget.dgspec.json") -and ($_.FullName -notlike "*\bin\*") -and ($_.FullName -notlike "*\obj\*") -and ($_.FullName -notlike "*\.vscode\*")}
+            
+                # Have to clear the variable, otherwise PS will remember the value from the prior loop!
+                Set lastModifiedFile $null
+                Get-ChildItem $folderName -Recurse | Where-Object $filter | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | Set lastModifiedFile
+                if ($lastModifiedFile -eq $null){
+                    "No modified files were found for $file"
+                    continue
+                }
+            
+            
+                Set lastModified ($lastModifiedFile).LastWriteTime
+                Set lastModifiedFileName ($lastModifiedFile).Name
+                Set lastPublishDate $lastModified
+                Set lastPublishDateDesc ""
+                "The last modified file was $lastModifiedFileName, at $lastModified"
+
+
+                
                 "Patching $csprojFilePath"
                 ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
             }
