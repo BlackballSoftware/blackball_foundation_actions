@@ -42,7 +42,7 @@ jobs:
                 if ($_.Name -eq "App.csproj" -or $_.Name -eq "Web.csproj") {
             
                     # Define your filter more cleanly using an array and -in operator
-                    $validExtensions = @(".cs", ".ts", ".js", ".less", ".cshtml")
+                    $validExtensions = @(".cs", ".css", ".js", ".less", ".cshtml")
                 
                     # Get all files in the folder and its subfolders that match your criteria
                     $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
