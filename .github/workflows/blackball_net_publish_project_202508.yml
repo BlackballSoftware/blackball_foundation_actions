@@ -66,7 +66,18 @@ jobs:
                         # -- $file.FullName ensures that git correctly handles the file path
                         # Use the call operator '&' and parentheses to ensure the command and its arguments are processed correctly
                         # The extra quotes around the file name are crucial for paths with spaces
-                        $gitDateString = & git log -1 --pretty=format:%ad --date=iso -- "$($file.FullName)"
+                        # Create a parameter list for git log to ensure arguments are passed correctly
+                        $gitLogParams = @(
+                            'log',
+                            '-1',
+                            '--pretty=format:%ad',
+                            '--date=iso',
+                            '--',
+                            $file.FullName
+                        )
+                        
+                        # Use the call operator '&' to execute the command with the parameter list
+                        $gitDateString = & git @gitLogParams
                         
                         "Git $($file.Name): $gitDateString"
                         # Check if a date was returned (files not in git history will return nothing)
