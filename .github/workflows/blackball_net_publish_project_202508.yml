@@ -42,14 +42,13 @@ jobs:
                 if ($_.Name -eq "App.csproj" -or $_.Name -eq "Web.csproj") {
             
                     # Define your filter more cleanly using an array and -in operator
-                    $validExtensions = @(".png", ".gif", ".jpg", ".targets", ".svg", ".json", ".cs", ".csproj", ".ts", ".js", ".less", ".cshtml", ".xml")
+                    $validExtensions = @(".cs", ".ts", ".js", ".less", ".cshtml")
                 
                     # Get all files in the folder and its subfolders that match your criteria
                     $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
                         $_.Extension -in $validExtensions -and
                         $_.Name -notlike "*.runtimeconfig.json" -and
                         $_.Name -notlike "*.nuget.dgspec.json" -and
-                        $_.Name -notlike "*.csproj" -and
                         $_.Name -notlike "*appsettings.json" -and
                         $_.FullName -notlike "*\bin\*" -and
                         $_.FullName -notlike "*\obj\*" -and
