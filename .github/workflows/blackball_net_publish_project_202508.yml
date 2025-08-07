@@ -49,6 +49,7 @@ jobs:
                         $_.Name -notlike "*.runtimeconfig.json" -and
                         $_.Name -notlike "*.nuget.dgspec.json" -and
                         $_.Name -notlike "*.csproj" -and
+                        $_.Name -notlike "*appsettings.json" -and
                         $_.FullName -notlike "*\bin\*" -and
                         $_.FullName -notlike "*\obj\*" -and
                         $_.FullName -notlike "*\.vscode\*"
