@@ -35,59 +35,55 @@ jobs:
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
                 $assemblyInfoPath = $_.FullName
                 $folderName = $_.Directory
+
+                # If we have a UI project, I want to grab the lastest modified file date, because our front-end raises 'update' notifications
+                # based on this. I am hard-coding our convention-based names (App and Web) here, so this will need updating later if we do something else
+                if ($_.Name -eq "App.csproj" -or $_.Name -eq "Web.csproj") {
             
-                # Define your filter more cleanly using an array and -in operator
-                $validExtensions = @(".png", ".gif", ".jpg", ".targets", ".svg", ".json", ".cs", ".csproj", ".ts", ".js", ".less", ".cshtml", ".xml")
-            
-                # Get all files in the folder and its subfolders that match your criteria
-                $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
-                    $_.Extension -in $validExtensions -and
-                    $_.Name -notlike "*.runtimeconfig.json" -and
-                    $_.Name -notlike "*.nuget.dgspec.json" -and
-                    $_.Name -notlike "*.csproj" -and
-                    $_.FullName -notlike "*\bin\*" -and
-                    $_.FullName -notlike "*\obj\*" -and
-                    $_.FullName -notlike "*\.vscode\*"
-                }
-            
-                $lastModifiedFile = $null
-                $lastModified = [datetime]::MinValue
-            
-                # Loop through each filtered file to find the one with the latest commit date
-                foreach ($file in $filesToInspect) {
-                    # Use git log to get the author date of the last commit for this file
-                    # The -1 option gets only the last commit
-                    # --pretty=format:%ad formats the output to just the author date
-                    # -- $file.FullName ensures that git correctly handles the file path
-                    $gitDateString = git log -1 --pretty=format:%ad -- "$($file.FullName)"
-            
-                    # Check if a date was returned (files not in git history will return nothing)
-                    if ($gitDateString) {
-                        # Convert the string output from git log into a DateTime object
-                        $commitDate = [datetime]::ParseExact($gitDateString, 'ddd MMM d HH:mm:ss yyyy zzz', [System.Globalization.CultureInfo]::InvariantCulture)
-            
-                        if ($commitDate -gt $lastModified) {
-                            $lastModified = $commitDate
-                            $lastModifiedFile = $file
+                    # Define your filter more cleanly using an array and -in operator
+                    $validExtensions = @(".png", ".gif", ".jpg", ".targets", ".svg", ".json", ".cs", ".csproj", ".ts", ".js", ".less", ".cshtml", ".xml")
+                
+                    # Get all files in the folder and its subfolders that match your criteria
+                    $filesToInspect = Get-ChildItem $folderName -Recurse -File | Where-Object {
+                        $_.Extension -in $validExtensions -and
+                        $_.Name -notlike "*.runtimeconfig.json" -and
+                        $_.Name -notlike "*.nuget.dgspec.json" -and
+                        $_.Name -notlike "*.csproj" -and
+                        $_.FullName -notlike "*\bin\*" -and
+                        $_.FullName -notlike "*\obj\*" -and
+                        $_.FullName -notlike "*\.vscode\*"
+                    }
+                
+                    $lastModifiedFile = $null
+                    $lastModified = [datetime]::MinValue
+                
+                    # Loop through each filtered file to find the one with the latest commit date
+                    foreach ($file in $filesToInspect) {
+                        # Use git log to get the author date of the last commit for this file
+                        # The -1 option gets only the last commit
+                        # --pretty=format:%ad formats the output to just the author date
+                        # -- $file.FullName ensures that git correctly handles the file path
+                        $gitDateString = git log -1 --pretty=format:%ad -- "$($file.FullName)"
+                
+                        # Check if a date was returned (files not in git history will return nothing)
+                        if ($gitDateString) {
+                            # Convert the string output from git log into a DateTime object
+                            $commitDate = [datetime]::ParseExact($gitDateString, 'ddd MMM d HH:mm:ss yyyy zzz', [System.Globalization.CultureInfo]::InvariantCulture)
+                
+                            if ($commitDate -gt $lastModified) {
+                                $lastModified = $commitDate
+                                $lastModifiedFile = $file
+                            }
                         }
                     }
+                    # Set lastModified ($lastModifiedFile).LastWriteTime
+                    "The last modified file for $($_.Name) was $($lastModifiedFile.Name), at $lastModified (from git commit date)"
+                }else{
+                    Get-Date | Set lastModified
+                    "The modification timestamp for $($_.Name) is $lastModified (current date)"
                 }
-            
-                if ($lastModifiedFile -eq $null) {
-                    "No modified files were found for $($_.Name)"
-                    continue
-                }
-            
-                "The last modified file for $($_.Name) was $($lastModifiedFile.Name), at $lastModified (from git commit date)"
 
-            
-            
-                Set lastModified ($lastModifiedFile).LastWriteTime
-                Set lastModifiedFileName ($lastModifiedFile).Name
-                Set lastPublishDate $lastModified
-                Set lastPublishDateDesc ""
-                "The last modified file was $lastModifiedFileName, at $lastModified"
-               
+                # Patch the csproj file version 
                 $packageVersion = $lastModified.ToString("3.yy.MMdd.HHmm")
                 Set versionTag "<FileVersion>$packageVersion</FileVersion>"
                 "Patching $assemblyInfoPath to $packageVersion"
