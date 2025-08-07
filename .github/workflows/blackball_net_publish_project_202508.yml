@@ -1,0 +1,97 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Shared Blackball - Publish to Azure
+
+on:
+ workflow_call:
+    inputs:
+     project_to_deploy:
+      required: true
+      type: string
+     azure_app_name:
+      required: true
+      type: string
+     working_directory:
+      required: false
+      type: string
+      default: ./
+    secrets:
+      azure_publish_profile:
+        required: true
+
+jobs:
+
+  publish:
+    runs-on: windows-latest
+    
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Bump version
+        shell: pwsh
+        run: |
+            Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            
+            "Bumping version $packageVersion"
+            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
+            Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File -Name| ForEach-Object {
+                Set csprojFilePath $_
+                "Patching $csprojFilePath"
+                ((Get-Content -path $csprojFilePath -Raw) -replace '\<FileVersion\>[^\<]+\</FileVersion\>', $versionTag) | Set-Content -path $csprojFilePath
+            }
+            
+            "Bumping service worker version $packageVersion"
+            Set swTag "const VERSION = ""$packageVersion"";"
+            Get-ChildItem -Path .\ -Filter serviceworker.* -Recurse -File -Name| ForEach-Object {
+             Set swFilePath $_
+             "Patching $swFilePath"
+             ((Get-Content -path $swFilePath -Raw) -replace 'const VERSION = \"[^\"]+\";', $swTag) | Set formattedFile
+             Set-Content $formattedFile -path $swFilePath
+            }
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '9.0.x'
+          include-prerelease: true
+
+          
+      - name: Initialize Blackball Nuget Farm
+        run: dotnet nuget add source --name blackball "https://nuget.blackballsoftware.com/api/v2"
+      
+      - name: Publish
+        working-directory: ${{inputs.working_directory}}
+        # 23 May 2022, Ben Liebert: If I add --no-build and --no-restore flags to this line, it fails to generate the assets.json file and cannot publish. Which is weird
+        # because by this point we have already built/restored (in other workflow) and I thought that adding these flags was entirely the point of pre-building?
+        run: dotnet publish ${{inputs.project_to_deploy}}\${{inputs.project_to_deploy}}.csproj -c Release -o ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}} -a x64
+       
+      - name: Upload Web artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app-${{inputs.project_to_deploy}}
+          path: ${{env.DOTNET_ROOT}}/${{inputs.project_to_deploy}}
+
+
+  deploy:
+    runs-on: windows-latest
+    needs: publish
+    environment:
+      name: 'staging'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app-${{inputs.project_to_deploy}}
+
+      - name: Deploy to Azure
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{inputs.azure_app_name}}
+          slot-name: staging
+          publish-profile: ${{ secrets.azure_publish_profile }}
+          package: .
