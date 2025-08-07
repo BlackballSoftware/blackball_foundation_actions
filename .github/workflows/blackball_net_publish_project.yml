@@ -28,7 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+        with:
+          fetch-depth: 0  # We need this to get the full commit history, which is used below to get the last commit date for each file in App/Web
       - name: Bump version
         shell: pwsh
         run: |
