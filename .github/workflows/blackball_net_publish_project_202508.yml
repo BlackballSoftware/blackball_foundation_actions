@@ -31,9 +31,9 @@ jobs:
         shell: pwsh
         run: |
             
-            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
+            
             Get-ChildItem -Path .\ -Filter *.csproj -Recurse -File | ForEach-Object {
-                Set assemblyInfoPath $_.Name
+                Set assemblyInfoPath $_.FullName
                 Set folderName $_.Directory
                 
                 # When you rebuild a project, the staticwebassets.pack.sentinel file seems to be last modified. Let's restrict to just those files
@@ -64,6 +64,7 @@ jobs:
             
             "Bumping service worker version $packageVersion"
             Get-Date -Format "3.yy.MMdd.HHmm" | Set packageVersion
+            Set versionTag "<FileVersion>$packageVersion</FileVersion>"
             Set swTag "const VERSION = ""$packageVersion"";"
             Get-ChildItem -Path .\ -Filter serviceworker.* -Recurse -File -Name| ForEach-Object {
              Set swFilePath $_
